@@ -1,12 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 set -x
 
-if [ -z "$INPUT_SOURCE_FOLDER" ]
+input_source=($INPUT_SOURCE_FOLDER)
+input_dest=($INPUT_DESTINATION_FOLDER)
+if [ -z "$input_source" ]
 then
-  echo "Source folder must be defined"
+  echo "Source folders must be defined"
   return -1
+fi
+
+if [ "${#input_source[@]}" != "${#input_dest[@]}" ]
+then
+  echo "Invalid number of source and destination folders"
+  exit 1
 fi
 
 if [ $INPUT_DESTINATION_HEAD_BRANCH == "main" ] || [ $INPUT_DESTINATION_HEAD_BRANCH == "master"]
@@ -33,8 +41,11 @@ echo "Cloning destination git repository"
 git clone "https://$API_TOKEN_GITHUB@github.com/$INPUT_DESTINATION_REPO.git" "$CLONE_DIR"
 
 echo "Copying contents to git repo"
-mkdir -p $CLONE_DIR/$INPUT_DESTINATION_FOLDER/
-cp -R "$INPUT_SOURCE_FOLDER/." "$CLONE_DIR/$INPUT_DESTINATION_FOLDER/"
+for i in "${!input_source[@]}"; do
+    mkdir -p $CLONE_DIR/${input_dest[i]}/
+    cp -r ${input_source[i]} "$CLONE_DIR/${input_dest[i]}"
+    echo "${input_source[i]} ${input_dest[i]}"
+done
 cd "$CLONE_DIR"
 git checkout -b "$INPUT_DESTINATION_HEAD_BRANCH"
 
